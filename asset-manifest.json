@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/memorization-app/static/css/main.4601d3ea.css",
+    "main.js": "/memorization-app/static/js/main.a6c96d71.js",
+    "index.html": "/memorization-app/index.html",
+    "main.4601d3ea.css.map": "/memorization-app/static/css/main.4601d3ea.css.map",
+    "main.a6c96d71.js.map": "/memorization-app/static/js/main.a6c96d71.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.4601d3ea.css",
+    "static/js/main.a6c96d71.js"
+  ]
+}
