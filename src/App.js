@@ -145,8 +145,8 @@ function App() {
             <Alert variant="destructive" className="mt-2">
               {isHintVisible ? (
                 <div>
-                  <p>입력한 내용: {userInput}</p>
-                  <p>정답: {lines[currentLine]}</p>
+                  <p>입력 : {userInput}</p>
+                  <p>정답 : {lines[currentLine]}</p>
                 </div>
               ) : (
                 <div>
