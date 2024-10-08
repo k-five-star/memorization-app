@@ -5,6 +5,8 @@ import { Eye, EyeOff } from 'lucide-react';
 import Button from './components/ui/Button';
 import Textarea from './components/ui/Textarea';
 import Alert from './components/ui/Alert';
+import Modal from './components/ui/Modal'; // 추가된 부분
+import Confetti from './components/ui/Confetti'; // 추가된 부분
 
 function App() {
   const [originalText, setOriginalText] = useState('');
@@ -17,6 +19,9 @@ function App() {
   const [mistakeCount, setMistakeCount] = useState(0);
   const [hintCount, setHintCount] = useState(0);
   const [isHintVisible, setIsHintVisible] = useState(false);
+  const [showCongratulations, setShowCongratulations] = useState(false); // 추가된 부분
+  const [showMistakeNote, setShowMistakeNote] = useState(false); // 추가된 부분
+  const [mistakeLog, setMistakeLog] = useState({}); // 추가된 부분
 
   // "정확한 입력" 영역에 대한 ref 추가
   const correctInputRef = useRef(null);
@@ -30,6 +35,9 @@ function App() {
     setMistakeCount(0);
     setHintCount(0);
     setIsHintVisible(false);
+    setMistakeLog({});
+    setShowCongratulations(false);
+    setShowMistakeNote(false);
   }, [originalText]);
 
   useEffect(() => {
@@ -51,9 +59,31 @@ function App() {
       setCurrentLine((prev) => prev + 1);
       setShowError(false);
       setIsHintVisible(false);
+
+      // 모든 줄을 완료하면 축하 팝업 표시
+      if (currentLine + 1 === lines.length) {
+        setShowCongratulations(true);
+      }
     } else {
       setShowError(true);
       setMistakeCount((prev) => prev + 1);
+
+      // 오답 로그 저장
+      setMistakeLog((prev) => {
+        const lineNumber = currentLine + 1;
+        const prevMistakes = prev[lineNumber] ? prev[lineNumber].mistakes : [];
+        if (prevMistakes.length < 3) {
+          return {
+            ...prev,
+            [lineNumber]: {
+              correctLine: lines[currentLine],
+              mistakes: [...prevMistakes, userInput],
+            },
+          };
+        } else {
+          return prev;
+        }
+      });
     }
   };
 
@@ -73,6 +103,9 @@ function App() {
     setMistakeCount(0);
     setHintCount(0);
     setIsHintVisible(false);
+    setMistakeLog({});
+    setShowCongratulations(false);
+    setShowMistakeNote(false);
   };
 
   // 입력 초기화 기능
@@ -84,6 +117,9 @@ function App() {
     setMistakeCount(0);
     setHintCount(0);
     setIsHintVisible(false);
+    setMistakeLog({});
+    setShowCongratulations(false);
+    setShowMistakeNote(false);
   };
 
   // 역순으로 만들기 기능
@@ -92,7 +128,7 @@ function App() {
     setOriginalText(reversedText);
   };
 
-  // 홀수-짝수 라인 교환 기능 추가
+  // 홀수-짝수 라인 교환 기능
   const swapOddEvenLines = () => {
     const originalLines = originalText.split('\n');
     const swappedLines = [];
@@ -110,8 +146,76 @@ function App() {
     setOriginalText(swappedText);
   };
 
+  // 오답 노트 복사 기능
+  const copyMistakeNote = () => {
+    let report = '';
+    Object.keys(mistakeLog).forEach((lineNumber) => {
+      const { correctLine, mistakes } = mistakeLog[lineNumber];
+      report += `- 정답 라인 ${lineNumber}:\n${correctLine}\n`;
+      mistakes.forEach((mistake, index) => {
+        report += `오답${index + 1}: ${mistake}\n`;
+      });
+      report += '\n';
+    });
+    navigator.clipboard.writeText(report);
+    alert('보고서가 복사되었습니다.');
+  };
+
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white">
+      {/* 폭죽 효과 */}
+      {showCongratulations && <Confetti />}
+
+      {/* 축하합니다 모달 */}
+      {showCongratulations && !showMistakeNote && (
+        <Modal onClose={() => setShowCongratulations(false)}>
+          <h2 className="text-2xl font-bold mb-4 text-center">🎉 축하합니다! 🎉</h2>
+          <p className="text-center mb-4">
+            틀린 횟수: {mistakeCount}, 힌트 사용 횟수: {hintCount}
+          </p>
+          <div className="flex justify-center space-x-4">
+            <Button onClick={() => setShowMistakeNote(true)} variant="outline">
+              오답 노트
+            </Button>
+            <Button onClick={() => setShowCongratulations(false)}>닫기</Button>
+          </div>
+        </Modal>
+      )}
+
+      {/* 오답 노트 모달 */}
+      {showMistakeNote && (
+        <Modal onClose={() => setShowMistakeNote(false)}>
+          <h2 className="text-2xl font-bold mb-4 text-center">오답 노트</h2>
+          <div className="overflow-auto max-h-64 mb-4">
+            {Object.keys(mistakeLog).length > 0 ? (
+              Object.keys(mistakeLog).map((lineNumber) => {
+                const { correctLine, mistakes } = mistakeLog[lineNumber];
+                return (
+                  <div key={lineNumber} className="mb-4">
+                    <p className="font-bold">- 정답 라인 {lineNumber}:</p>
+                    <p className="text-green-400">정답: {correctLine}</p>
+                    {mistakes.map((mistake, index) => (
+                      <p key={index} className="text-red-400">
+                        오답: {mistake}
+                      </p>
+                    ))}
+                  </div>
+                );
+              })
+            ) : (
+              <p>오답이 없습니다.</p>
+            )}
+          </div>
+          <div className="flex justify-center space-x-4">
+            <Button onClick={copyMistakeNote} variant="success">
+              Copy
+            </Button>
+            <Button onClick={() => setShowMistakeNote(false)}>닫기</Button>
+          </div>
+        </Modal>
+      )}
+
+      {/* 기존 내용 */}
       {/* 왼쪽 섹션 */}
       <div className="md:w-1/2 p-4 border-b md:border-b-0 md:border-r border-gray-700">
         <div className="flex justify-between items-center mb-2">
