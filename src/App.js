@@ -1,6 +1,6 @@
 // src/App.js
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import Button from './components/ui/Button';
 import Textarea from './components/ui/Textarea';
@@ -18,6 +18,9 @@ function App() {
   const [hintCount, setHintCount] = useState(0);
   const [isHintVisible, setIsHintVisible] = useState(false);
 
+  // "정확한 입력" 영역에 대한 ref 추가
+  const correctInputRef = useRef(null);
+
   useEffect(() => {
     setLines(originalText.split('\n').filter((line) => line.trim() !== ''));
     setCurrentLine(0);
@@ -28,6 +31,13 @@ function App() {
     setHintCount(0);
     setIsHintVisible(false);
   }, [originalText]);
+
+  useEffect(() => {
+    // correctInput이 변경될 때마다 스크롤을 맨 아래로 이동
+    if (correctInputRef.current) {
+      correctInputRef.current.scrollTop = correctInputRef.current.scrollHeight;
+    }
+  }, [correctInput]);
 
   const handleUserInput = (e) => {
     setUserInput(e.target.value);
@@ -65,7 +75,7 @@ function App() {
     setIsHintVisible(false);
   };
 
-  // 입력 초기화 기능 추가
+  // 입력 초기화 기능
   const resetInput = () => {
     setUserInput('');
     setCorrectInput('');
@@ -82,6 +92,24 @@ function App() {
     setOriginalText(reversedText);
   };
 
+  // 홀수-짝수 라인 교환 기능 추가
+  const swapOddEvenLines = () => {
+    const originalLines = originalText.split('\n');
+    const swappedLines = [];
+    for (let i = 0; i < originalLines.length; i += 2) {
+      if (i + 1 < originalLines.length) {
+        // 짝이 있는 경우 교환
+        swappedLines.push(originalLines[i + 1]);
+        swappedLines.push(originalLines[i]);
+      } else {
+        // 마지막 줄이 홀수인 경우 그대로 추가
+        swappedLines.push(originalLines[i]);
+      }
+    }
+    const swappedText = swappedLines.join('\n');
+    setOriginalText(swappedText);
+  };
+
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white">
       {/* 왼쪽 섹션 */}
@@ -89,6 +117,10 @@ function App() {
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-xl font-bold">원본 텍스트</h2>
           <div className="flex space-x-2">
+            {/* 홀수-짝수 라인 교환 버튼 추가 */}
+            <Button onClick={swapOddEvenLines} variant="outline" size="sm">
+              홀수라인↔짝수라인
+            </Button>
             {/* 역순으로 만들기 버튼 */}
             <Button onClick={reverseLines} variant="outline" size="sm">
               역순으로 만들기
@@ -133,22 +165,23 @@ function App() {
       {/* 오른쪽 섹션 */}
       <div className="md:w-1/2 p-4 flex flex-col">
         {/* 오른쪽 상단: 정확한 입력 표시 */}
-        <div className="flex-1 mb-4 overflow-auto">
+        <div
+          className="flex-1 mb-4 overflow-auto bg-gray-800 p-2"
+          ref={correctInputRef}
+        >
           <h2 className="text-xl font-bold mb-2">
             정확한 입력
             <span className="text-sm font-normal ml-2">
               (틀린 횟수: {mistakeCount}, 힌트 사용 횟수: {hintCount})
             </span>
           </h2>
-          <div className="bg-gray-800 p-2 h-full">
-            {correctInput ? (
-              correctInput.split('\n').map((line, index) => (
-                <p key={index}>{line}</p>
-              ))
-            ) : (
-              <p className="text-gray-500">답을 맞춘 입력은 여기에 표시됩니다..</p>
-            )}
-          </div>
+          {correctInput ? (
+            correctInput.split('\n').map((line, index) => (
+              <p key={index}>{line}</p>
+            ))
+          ) : (
+            <p className="text-gray-500">답을 맞춘 입력은 여기에 표시됩니다..</p>
+          )}
         </div>
 
         {/* 오른쪽 하단: 사용자 입력 영역 */}
@@ -171,7 +204,6 @@ function App() {
             <Button onClick={resetAll} className="mr-2">
               전체 초기화
             </Button>
-            {/* 입력 초기화 버튼 추가 */}
             <Button onClick={resetInput} variant="success" className="mr-2">
               입력 초기화
             </Button>
