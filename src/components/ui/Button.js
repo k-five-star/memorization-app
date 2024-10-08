@@ -2,14 +2,7 @@
 
 import React from 'react';
 
-function Button({
-  children,
-  onClick,
-  variant = 'default',
-  size = 'md',
-  className = '',
-  ...props
-}) {
+function Button({ children, onClick, variant = 'default', size = 'md', className = '', ...props }) {
   const baseStyle =
     'inline-flex items-center justify-center border font-medium focus:outline-none focus:ring-2 focus:ring-offset-2';
   const variants = {
@@ -20,7 +13,6 @@ function Button({
     link: 'text-blue-500 hover:underline focus:ring-blue-500',
     destructive:
       'bg-red-600 text-white border-transparent hover:bg-red-700 focus:ring-red-500',
-    // success variant 추가
     success:
       'bg-green-600 text-white border-transparent hover:bg-green-700 focus:ring-green-500',
   };
