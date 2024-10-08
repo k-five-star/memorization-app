@@ -1,3 +1,5 @@
+// src/App.js
+
 import React, { useState, useEffect } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import Button from './components/ui/Button';
@@ -63,19 +65,46 @@ function App() {
     setIsHintVisible(false);
   };
 
+  // 입력 초기화 기능 추가
+  const resetInput = () => {
+    setUserInput('');
+    setCorrectInput('');
+    setCurrentLine(0);
+    setShowError(false);
+    setMistakeCount(0);
+    setHintCount(0);
+    setIsHintVisible(false);
+  };
+
+  // 역순으로 만들기 기능
+  const reverseLines = () => {
+    const reversedText = originalText.split('\n').reverse().join('\n');
+    setOriginalText(reversedText);
+  };
+
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-900 text-white">
       {/* 왼쪽 섹션 */}
       <div className="md:w-1/2 p-4 border-b md:border-b-0 md:border-r border-gray-700">
         <div className="flex justify-between items-center mb-2">
           <h2 className="text-xl font-bold">원본 텍스트</h2>
-          <Button
-            onClick={() => setShowOriginal(!showOriginal)}
-            variant="outline"
-            size="icon"
-          >
-            {showOriginal ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          </Button>
+          <div className="flex space-x-2">
+            {/* 역순으로 만들기 버튼 */}
+            <Button onClick={reverseLines} variant="outline" size="sm">
+              역순으로 만들기
+            </Button>
+            <Button
+              onClick={() => setShowOriginal(!showOriginal)}
+              variant="outline"
+              size="icon"
+            >
+              {showOriginal ? (
+                <EyeOff className="h-4 w-4" />
+              ) : (
+                <Eye className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         </div>
         {/* 안내문구 추가 */}
         <p className="text-sm text-gray-500 mt-2">
@@ -137,10 +166,16 @@ function App() {
             }}
             placeholder="암기한 내용을 한 줄씩 입력하고 Enter 키를 누르세요. 띄어쓰기조차도 틀려선 안됩니다 !!"
           />
-          {/* 전체 초기화 버튼 추가 */}
-          <Button onClick={resetAll} className="mr-2">
-            전체 초기화
-          </Button>
+          {/* 버튼 그룹 */}
+          <div className="flex space-x-2">
+            <Button onClick={resetAll} className="mr-2">
+              전체 초기화
+            </Button>
+            {/* 입력 초기화 버튼 추가 */}
+            <Button onClick={resetInput} variant="success" className="mr-2">
+              입력 초기화
+            </Button>
+          </div>
           {showError && (
             <Alert variant="destructive" className="mt-2">
               {isHintVisible ? (
