@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/memorization-app/static/css/main.5c623989.css",
-    "main.js": "/memorization-app/static/js/main.3bc20f32.js",
+    "main.css": "/memorization-app/static/css/main.e3393bd1.css",
+    "main.js": "/memorization-app/static/js/main.5516df23.js",
     "index.html": "/memorization-app/index.html",
-    "main.5c623989.css.map": "/memorization-app/static/css/main.5c623989.css.map",
-    "main.3bc20f32.js.map": "/memorization-app/static/js/main.3bc20f32.js.map"
+    "main.e3393bd1.css.map": "/memorization-app/static/css/main.e3393bd1.css.map",
+    "main.5516df23.js.map": "/memorization-app/static/js/main.5516df23.js.map"
   },
   "entrypoints": [
-    "static/css/main.5c623989.css",
-    "static/js/main.3bc20f32.js"
+    "static/css/main.e3393bd1.css",
+    "static/js/main.5516df23.js"
   ]
 }
