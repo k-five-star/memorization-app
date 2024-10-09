@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { Save, Upload, BookOpen } from 'lucide-react'; // 아이콘 추가
+import { Save, Upload, BookOpen, Trash2 } from 'lucide-react'; // Trash2 아이콘 추가
 import Button from './components/ui/Button';
 import Textarea from './components/ui/Textarea';
 import Alert from './components/ui/Alert';
@@ -27,15 +27,15 @@ function App() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [showLoadModal, setShowLoadModal] = useState(false);
   const [documentName, setDocumentName] = useState('');
-  const maxDocuments = 50; // 상수로 선언
+  const maxDocuments = 50;
   const [sessionMistakes, setSessionMistakes] = useState({});
   const [selectedDocument, setSelectedDocument] = useState(null);
-  const [showStatsModal, setShowStatsModal] = useState(false); // 오답 기록 확인 모달 상태 추가
+  const [showStatsModal, setShowStatsModal] = useState(false);
 
   const correctInputRef = useRef(null);
 
   useEffect(() => {
-    // 앱 시작 시 로컬 스토리지에서 문서 목록 한 번만 불러오기
+    // 앱 시작 시 로컬 스토리지에서 문서 목록 불러오기
     const docs = JSON.parse(localStorage.getItem('savedDocuments') || '[]');
     setSavedDocuments(docs);
   }, []);
@@ -190,6 +190,14 @@ function App() {
     setShowLoadModal(false);
   };
 
+  // 문서 삭제하기
+  const deleteDocument = (docToDelete) => {
+    const updatedDocs = savedDocuments.filter((doc) => doc.name !== docToDelete.name);
+    setSavedDocuments(updatedDocs);
+    localStorage.setItem('savedDocuments', JSON.stringify(updatedDocs));
+    alert('문서가 삭제되었습니다.');
+  };
+
   // 오답 기록 저장
   const saveMistakeRecord = () => {
     if (!selectedDocument) return;
@@ -207,7 +215,7 @@ function App() {
       return doc;
     });
     setSavedDocuments(updatedDocs);
-    // 로컬 스토리지 업데이트는 앱이 종료되거나 저장 시 한 번만 수행
+    localStorage.setItem('savedDocuments', JSON.stringify(updatedDocs));
   };
 
   // 컴포넌트 언마운트 시 로컬 스토리지에 데이터 저장
@@ -233,14 +241,18 @@ function App() {
         }
       });
       if (mistakeFrequency > 0) {
-        console.warn(`경고: 최근 ${mistakeFrequency}번 틀렸던 부분입니다.`);
+        alert(`경고: 최근 ${mistakeFrequency}번 틀렸던 부분입니다.`);
       }
     }
   }, [currentLine, selectedDocument]);
 
   // 오답 기록 확인
   const viewMistakeHistory = () => {
-    setShowStatsModal(true);
+    if (selectedDocument) {
+      setShowStatsModal(true);
+    } else {
+      alert('먼저 문서를 불러와 주세요.');
+    }
   };
 
   return (
@@ -257,7 +269,7 @@ function App() {
           </p>
           <div className="flex justify-center space-x-4">
             <Button onClick={() => setShowMistakeNote(true)} variant="outline">
-              오답 노트
+              오답 노트 보기
             </Button>
             <Button onClick={() => setShowCongratulations(false)}>닫기</Button>
           </div>
@@ -293,6 +305,45 @@ function App() {
         </Modal>
       )}
 
+      {/* 오답 기록 확인 모달 */}
+      {showStatsModal && (
+        <Modal onClose={() => setShowStatsModal(false)}>
+          <h2 className="text-xl font-bold mb-4">오답 기록 확인</h2>
+          {selectedDocument ? (
+            <div className="overflow-auto max-h-64 mb-4">
+              <p className="font-bold mb-2">{selectedDocument.name}</p>
+              {selectedDocument.stats.length > 0 ? (
+                selectedDocument.stats.map((record, index) => (
+                  <div key={index} className="mb-4">
+                    <p className="text-sm text-gray-400">
+                      회차 {index + 1} - {new Date(record.timestamp).toLocaleString()}
+                    </p>
+                    <p className="text-sm">
+                      틀린 횟수: {record.mistakeCount}, 힌트 사용 횟수: {record.hintCount}
+                    </p>
+                    {/* 각 라인별 오답 횟수 시각화 */}
+                    {Object.keys(record.sessionMistakes).map((lineNumber) => (
+                      <div key={lineNumber} className="ml-2">
+                        <p className="text-sm text-red-400">
+                          라인 {lineNumber}: {record.sessionMistakes[lineNumber].length}회 오답
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ))
+              ) : (
+                <p>오답 기록이 없습니다.</p>
+              )}
+            </div>
+          ) : (
+            <p>문서를 먼저 선택하세요.</p>
+          )}
+          <div className="flex justify-end">
+            <Button onClick={() => setShowStatsModal(false)}>닫기</Button>
+          </div>
+        </Modal>
+      )}
+
       {/* 문서 저장 모달 */}
       {showSaveModal && (
         <Modal onClose={() => setShowSaveModal(false)}>
@@ -322,19 +373,33 @@ function App() {
               {savedDocuments.map((doc, index) => (
                 <div
                   key={index}
-                  className="p-2 mb-2 bg-gray-800 rounded-md cursor-pointer hover:bg-gray-700"
-                  onClick={() => loadDocument(doc)}
+                  className="p-2 mb-2 bg-gray-800 rounded-md"
                 >
-                  <p className="font-bold">{doc.name}</p>
-                  <p className="text-sm text-gray-400">
-                    생성일: {new Date(doc.createdAt).toLocaleString()}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    최근 3회의 평균 틀린 횟수: {calculateAverage(doc, 'mistakeCount')}
-                  </p>
-                  <p className="text-sm text-gray-400">
-                    최근 3회의 평균 힌트 사용 횟수: {calculateAverage(doc, 'hintCount')}
-                  </p>
+                  <div
+                    className="cursor-pointer hover:bg-gray-700 p-2 rounded-md"
+                    onClick={() => loadDocument(doc)}
+                  >
+                    <p className="font-bold">{doc.name}</p>
+                    <p className="text-sm text-gray-400">
+                      생성일: {new Date(doc.createdAt).toLocaleString()}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      최근 3회의 평균 틀린 횟수: {calculateAverage(doc, 'mistakeCount')}
+                    </p>
+                    <p className="text-sm text-gray-400">
+                      최근 3회의 평균 힌트 사용 횟수: {calculateAverage(doc, 'hintCount')}
+                    </p>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button
+                      onClick={() => deleteDocument(doc)}
+                      variant="destructive"
+                      size="sm"
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      삭제
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -343,43 +408,6 @@ function App() {
           )}
           <div className="flex justify-end">
             <Button onClick={() => setShowLoadModal(false)}>닫기</Button>
-          </div>
-        </Modal>
-      )}
-
-      {/* 오답 기록 확인 모달 */}
-      {showStatsModal && (
-        <Modal onClose={() => setShowStatsModal(false)}>
-          <h2 className="text-xl font-bold mb-4">오답 기록 확인</h2>
-          {selectedDocument ? (
-            <div className="overflow-auto max-h-64 mb-4">
-              <p className="font-bold mb-2">{selectedDocument.name}</p>
-              <div>
-                {selectedDocument.stats.map((record, index) => (
-                  <div key={index} className="mb-4">
-                    <p className="text-sm text-gray-400">
-                      회차 {index + 1} - {new Date(record.timestamp).toLocaleString()}
-                    </p>
-                    <p className="text-sm">
-                      틀린 횟수: {record.mistakeCount}, 힌트 사용 횟수: {record.hintCount}
-                    </p>
-                    {/* 각 라인별 오답 횟수 시각화 */}
-                    {Object.keys(record.sessionMistakes).map((lineNumber) => (
-                      <div key={lineNumber} className="ml-2">
-                        <p className="text-sm text-red-400">
-                          라인 {lineNumber}: {record.sessionMistakes[lineNumber].length}회 오답
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <p>문서를 먼저 선택하세요.</p>
-          )}
-          <div className="flex justify-end">
-            <Button onClick={() => setShowStatsModal(false)}>닫기</Button>
           </div>
         </Modal>
       )}
@@ -495,7 +523,7 @@ function App() {
             <Button onClick={resetInput} variant="success" className="mr-2">
               입력 초기화
             </Button>
-            <Button onClick={showHint} variant="outline" className="mr-2">
+            <Button onClick={showHint} className="mr-2">
               힌트 보기
             </Button>
           </div>
